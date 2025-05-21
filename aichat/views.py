@@ -3,9 +3,11 @@ from django.http import HttpResponse,JsonResponse,StreamingHttpResponse
 from rest_framework.views import APIView
 from django.views import View
 from rest_framework.response import Response
-from .serializers import *
 import json
-from userdatabase import *
+import time
+import asyncio
+from database import *
+import subprocess
 # Create your views here.
 
 # 大模型API
@@ -86,4 +88,39 @@ class UserView(View):
             create_user(user_id,email,username,password,status)
             return JsonResponse({"success": "User registered successfully"}, status=200)
 
+def async_generator():
+    for i in range(10):
+        yield str(i)+"\n"
+        time.sleep(1)
 
+def stream_response(request):
+    response = StreamingHttpResponse(async_generator(), content_type="text/plain")
+    return response
+
+def code_complier(request):
+    if request.method == "POST":
+        # 获取用户输入的代码
+        code = request.form.get("code")
+        try:
+            # 使用 subprocess 执行代码并捕获输出
+            result = subprocess.run(
+                ["python", "-c", code],  # 执行代码
+                text=True,               # 以文本形式返回输出
+                capture_output=True,    # 捕获标准输出和错误
+                timeout=5,               # 设置超时时间（秒）
+            )
+            # 返回执行结果
+            if result.returncode == 0:  # 执行成功
+                output = result.stdout
+            else:  # 执行失败
+                output = result.stderr
+
+        except subprocess.TimeoutExpired:  # 超时处理
+            output = "Error: Code execution timed out."
+        except Exception as e:  # 其他异常
+            output = f"Error: {str(e)}"
+        result = {
+            'output': output
+        }
+        return JsonResponse(result)  # 返回 JSON 格式的结果
+    return render(request,'code.html')

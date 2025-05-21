@@ -21,7 +21,8 @@ from rest_framework import routers
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('wel/',ReactView.as_view(),name='react'),
     path('tutorResponse/',TutorRespondView.as_view(),name='tutor-response'),
-    path('user/',UserView.as_view(),name='user')
+    path('user/',UserView.as_view(),name='user'),
+    path('stream/',stream_response,name='stream'),
+    path('code/',code_complier,name='code')
 ]
