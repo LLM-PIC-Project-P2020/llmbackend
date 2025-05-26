@@ -24,5 +24,9 @@ urlpatterns = [
     path('tutorResponse/',TutorRespondView.as_view(),name='tutor-response'),
     path('user/',UserView.as_view(),name='user'),
     path('stream/',stream_response,name='stream'),
-    path('code/',code_complier,name='code')
+    path('code/',code_complier,name='code'),
+    path('courses/',CoursesView.as_view(),name='courses'),
+    path('classes/',ClassesView.as_view(),name='classes'),
+    path('classContent/',ClassContentView.as_view(),name='class-content')
+    
 ]

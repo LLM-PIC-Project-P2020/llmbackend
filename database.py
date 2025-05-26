@@ -33,12 +33,13 @@ def create2_users_logins():
     );"""
     return create2
 
-def create3_courses():
-    create3 = """CREATE table `courses`(
-            `course_id` int primary key,
-            `course_name` varchar(20) not null,
-            `course_type` varchar(20) not null,
-            `course_content` varchar(100) not null
+def create3_classes():
+    create3 = """CREATE table `classes`(
+            `class_id` int primary key,
+            `class_name` varchar(20) not null,
+            `chapter_name` varchar(20) not null,
+            `chapter_id` int not null,
+            `class_content` varchar(100) not null
     );"""
     return create3
 
@@ -46,14 +47,23 @@ def create4_users_history():
     create4 = """CREATE table `history`(
             `user_id` int primary key,
             `user_name` varchar(20) not null,
-            `learned_course` varchar(50) not null,
+            `learned_class` varchar(50) not null,
             `learn_time` varchar(20) not null,
             `code_time` varchar(20) not null
     );"""
     return create4
 
+def create5_course():
+    create5 = """CREATE table `course`(
+            `chapter_id` int primary key,
+            `chapter_name` varchar(20) not null
+    );"""
+    return create5
+
+
 
 """
+表users函数
 向用户信息数据库添加数据
 """
 def create_user(db, user_id, username, email, password, status):
@@ -91,6 +101,7 @@ def create_user(db, user_id, username, email, password, status):
 
 
 """
+表users函数
 查询用户是否存在，返回布尔值
 """
 
@@ -126,6 +137,7 @@ def search(db, username, password):
 
 
 """
+表logins函数
 添加logins数据库数据，返回是否成功
 """
 
@@ -168,6 +180,7 @@ def user_login(db, user_id, token):
 
 
 """
+表logins函数
 删除logins数据库数据，返回是否成功
 """
 
@@ -206,119 +219,74 @@ def user_logout(db, token):
         # 关闭游标
         cursor.close()
 
-"""
-添加courses数据库数据，返回是否成功
-"""
-
-def add_course(db, course_id, course_name, course_category, course_content):
-
-    try:
-        cursor = db.cursor()
-
-        # 插入课程数据的SQL语句
-        sql_query = """
-        INSERT INTO courses (course_id, course_name, course_type, course_content)
-        VALUES (%s, %s, %s, %s)
-        """
-        course_data = (course_id, course_name, course_type, course_content)
-
-        # 执行SQL语句
-        cursor.execute(sql_query, course_data)
-
-        # 提交事务
-        db.commit()
-
-        return True, "课程添加成功"
-
-    except pymysql.Error as e:
-        # 回滚事务
-        db.rollback()
-        return False, f"课程添加失败: {e}"
-
-    finally:
-        # 关闭游标
-        cursor.close()
 
 """
-删除courses数据库数据，返回是否成功
+表classes函数
+获取某一特定章节的所有课程信息
 """
 
-def delete_course(db, course_name):
-
-    try:
-        cursor = db.cursor()
-
-        # 检查课程是否存在
-        check_sql = "SELECT course_id FROM courses WHERE course_name = %s"
-        cursor.execute(check_sql, (course_name,))
-        if not cursor.fetchone():
-            return False, "课程不存在"
-
-        # 删除课程的SQL语句
-        delete_sql = "DELETE FROM courses WHERE course_name = %s"
-        cursor.execute(delete_sql, (course_name,))
-
-        # 检查是否成功删除
-        if cursor.rowcount == 0:
-            return False, "删除失败，课程可能不存在"
-
-        # 提交事务
-        db.commit()
-        return True, "课程删除成功"
-
-    except pymysql.Error as e:
-        # 回滚事务
-        db.rollback()
-        return False, f"删除课程时出错: {e}"
-
-    finally:
-        # 关闭游标
-        cursor.close()
-
-"""
-调用课程，返回课程内容
-"""
-
-def get_course(db, course_name=None, course_type=None):
+def get_all_classes(db, chapter_id):
 
     try:
         cursor = db.cursor(pymysql.cursors.DictCursor)
 
-        # 基础SQL查询
-        sql_query = "SELECT * FROM courses WHERE 1=1"
-        params = []
+        # 查询特定章节的课程
+        sql = """
+        SELECT class_id as id, class_name as name 
+        FROM classes 
+        WHERE chapter_id = %s
+        ORDER BY class_id
+        """
+        cursor.execute(sql, (chapter_id,))
 
-        # 动态添加查询条件
-        if course_name:
-            sql_query += " AND course_name = %s"
-            params.append(course_name)
-        if course_category:
-            sql_query += " AND category = %s"
-            params.append(course_category)
+        classes = cursor.fetchall()
 
-        # 执行查询
-        cursor.execute(sql_query, tuple(params))
-        results = cursor.fetchall()
+        if not classes:
+            return True, []  # 章节存在但无课程时返回空列表
 
-        if not results:
-            return False, "未找到匹配的课程"
-
-        return True, results
+        return True, classes
 
     except pymysql.Error as e:
-        return False, f"查询课程时出错: {e}"
-
+        return False, f"数据库查询错误: {e}"
     finally:
         cursor.close()
 
-#cursor.execute(create)
-#db.commit()
+"""
+表classes函数
+输入章节ID和课程ID，获取课程内容
+"""
+
+def get_class_description(db, chapter_id, class_id):
+
+    try:
+        cursor = db.cursor(pymysql.cursors.DictCursor)
+
+        # 查询特定课程的内容
+        sql = """
+        SELECT class_content 
+        FROM classes 
+        WHERE chapter_id = %s AND class_id = %s
+        """
+        cursor.execute(sql, (chapter_id, class_id))
+
+        result = cursor.fetchone()
+
+        if not result:
+            return False, "未找到指定课程"
+
+        return True, result['content']
+
+    except pymysql.Error as e:
+        return False, f"数据库查询错误: {e}"
+    finally:
+        cursor.close()
 
 """
+表history函数
 增加课程学习时间
 """
 
-def add_course_time(db, user_name, time_to_add):
+def add_class_time(db, user_name, time_to_add):
 
     try:
         # 验证输入时间是否为有效数字
@@ -356,6 +324,7 @@ def add_course_time(db, user_name, time_to_add):
         cursor.close()
 
 """
+表history函数
 增加编程时间
 """
 
@@ -398,10 +367,11 @@ def add_code_time(db, user_name, time_to_add):
         cursor.close()
 
 """
+表history函数
 更新最近学习课程
 """
 
-def update_recent(db, user_name, course_name):
+def update_recent(db, user_name, class_name):
 
     try:
         cursor = db.cursor()
@@ -413,25 +383,25 @@ def update_recent(db, user_name, course_name):
             return False, f"用户 {user_name} 不存在"
 
         # 检查课程是否存在（可选，根据需求）
-        check_course_sql = "SELECT course_id FROM courses WHERE course_name = %s"
-        cursor.execute(check_course_sql, (course_name,))
+        check_class_sql = "SELECT class_id FROM classes WHERE class_name = %s"
+        cursor.execute(check_class_sql, (class_name,))
         if not cursor.fetchone():
-            return False, f"课程 {course_name} 不存在"
+            return False, f"课程 {class_name} 不存在"
 
         # 更新最近学习的课程
         update_sql = """
         UPDATE history 
-        SET learned_course = %s,
+        SET learned_class = %s,
         WHERE user_name = %s
         """
-        cursor.execute(update_sql, (course_name, user_name))
+        cursor.execute(update_sql, (class_name, user_name))
 
         # 4. 检查是否更新成功
         if cursor.rowcount == 0:
             return False, "更新最近学习课程失败"
 
         db.commit()
-        return True, f"用户 {user_name} 的最近学习课程已更新为 {course_name}"
+        return True, f"用户 {user_name} 的最近学习课程已更新为 {class_name}"
 
     except pymysql.Error as e:
         db.rollback()
@@ -442,6 +412,7 @@ def update_recent(db, user_name, course_name):
         cursor.close()
 
 """
+表history函数
 创建默认学习记录
 """
 
@@ -461,7 +432,7 @@ def create_history(db, user_id, user_name):
         INSERT INTO history (
             user_id, 
             user_name, 
-            learned_course, 
+            learned_class, 
             learn_time, 
             code_time
         ) VALUES (
@@ -482,6 +453,34 @@ def create_history(db, user_id, user_name):
         return False, f"数据库错误: {e}"
     except Exception as e:
         return False, f"系统错误: {e}"
+    finally:
+        cursor.close()
+
+"""
+表course函数
+获取所有章节信息
+"""
+
+def get_all_course(db):
+
+    try:
+        cursor = db.cursor(pymysql.cursors.DictCursor)
+
+        # 查询所有章节信息
+        sql = """
+        SELECT chapter_id as id, chapter_name as name 
+        FROM course 
+        GROUP BY chapter_id, chapter_name
+        ORDER BY chapter_id
+        """
+        cursor.execute(sql)
+
+        chapters = cursor.fetchall()
+
+        return True, chapters if chapters else []
+
+    except pymysql.Error as e:
+        return False, f"数据库查询错误: {e}"
     finally:
         cursor.close()
 

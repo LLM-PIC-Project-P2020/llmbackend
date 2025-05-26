@@ -1,54 +1,30 @@
 <!DOCTYPE html>
-<html>
-<head>
-    <title>流式输出示例</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        #output {
-            width: 500px;
-            height: 300px;
-            border: 1px solid #ccc;
-            padding: 10px;
-            overflow-y: auto;
-            margin-top: 20px;
-        }
-    </style>
-</head>
-<body>
-    <h1>流式输出结果</h1>
-    <div id="output"></div>
-    <script>
-        // 创建一个 fetch 请求来获取流式响应
-        const response = fetch('/stream/');  // 替换为你的实际路由
-        let reader = response.body.getReader();
-        let decoder = new TextDecoder();
-        let outputDiv = document.getElementById('output');
+<div style="font-family: monospace; border: 1px solid #ccc; padding: 1em; min-height: 100px;" id="output">
+  Waiting for stream to start...
+</div>
 
-        async function readStream() {
-            try {
-                while (true) {
-                    let { done, value } = await reader.read();
-                    if (done) {
-                        break;
-                    }
-                    let decodedValue = decoder.decode(value, { stream: true });
-                    // 获取当前时间
-                    let currentTime = new Date().toLocaleTimeString();
-                    console.log(currentTime)
-                    // 显示数字和接收时间
-                    outputDiv.innerHTML += decodedValue.trim() + ' - ' + currentTime + '<br>';
-                    // 滚动到底部
-                    outputDiv.scrollTop = outputDiv.scrollHeight;
-                }
-            } catch (err) {
-                console.error('读取流失败:', err);
-            }
-        }
+<script>
+const outputEl = document.getElementById('output');
+outputEl.textContent = ''; // 清空初始文字
 
-        readStream();
-    </script>
-</body>
-</html>
+fetch('/stream/')
+  .then(response => {
+    const reader = response.body.getReader();
+    let fullText = '';
+
+    const process = ({ done, value }) => {
+      if (done) {
+        outputEl.textContent += '\n\nStream completed!';
+        return;
+      }
+
+      fullText += new TextDecoder().decode(value);
+      outputEl.textContent = fullText;
+      outputEl.scrollTop = outputEl.scrollHeight; // 自动滚动到底部
+
+      return reader.read().then(process);
+    };
+
+    return reader.read().then(process);
+  });
+</script>
