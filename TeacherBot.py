@@ -1,13 +1,13 @@
 from openai import OpenAI
 from templates import *
 from test_case import Knowledges, Test
+from decouple import config
 
 # DEEPSEEK_API_KEY = "sk-e818c70c505248ba8d1266283907f905"
 # DEEPSEEK_BASE_URL = "https://api.deepseek.com"
-API_KEY =  "sk-rfWtF0v1aOGFJNbBMREnlbTb1jmmRMe9za2bjHUMrTNJzFdE"
-BASE_URL = "https://api.moonshot.cn/v1"
-MODEL = "moonshot-v1-8k"
-
+API_KEY =  config("API_KEY")    
+BASE_URL = config("BASE_URL")
+MODEL = config("MODEL")
 
 
 class TeacherBot:

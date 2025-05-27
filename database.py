@@ -2,6 +2,7 @@
 
 import pymysql
 
+
 # 打开数据库连接
 db = pymysql.connect(host='localhost',
                      user='root',
@@ -15,51 +16,59 @@ cursor = db.cursor()
 cursor.execute("SELECT VERSION()")
 
 # 创建用户数据表
-def create1_users():
-    create1 = """CREATE table `users`(
+
+create1 = """CREATE table `users`(
             `user_id` int primary key,
             `user_name` varchar(20) not null,
             `password` varchar(20) not null,
             `user_state` int ,
             `user_email` varchar(20)
         );"""
-    return create1
 
-def create2_users_logins():
-    create2 = """CREATE table `logins`(
+
+create2 = """CREATE table `logins`(
         `user_id` int primary key,
         `login_time` varchar(20) not null,
         `token` varchar(20) not null
     );"""
-    return create2
 
-def create3_classes():
-    create3 = """CREATE table `classes`(
+
+create3 = """CREATE table `classes`(
             `class_id` int primary key,
             `class_name` varchar(20) not null,
             `chapter_name` varchar(20) not null,
             `chapter_id` int not null,
             `class_content` varchar(100) not null
     );"""
-    return create3
 
-def create4_users_history():
-    create4 = """CREATE table `history`(
+create4 = """CREATE table `history`(
             `user_id` int primary key,
             `user_name` varchar(20) not null,
             `learned_class` varchar(50) not null,
             `learn_time` varchar(20) not null,
             `code_time` varchar(20) not null
     );"""
-    return create4
 
-def create5_course():
-    create5 = """CREATE table `course`(
+create5 = """CREATE table `course`(
             `chapter_id` int primary key,
             `chapter_name` varchar(20) not null
     );"""
-    return create5
 
+def create_tables(db,excute):
+    db = pymysql.connect(host='localhost',
+                     user='root',
+                     password='12345678',
+                     database='sql_user')
+    cursor = db.cursor()
+    try:
+        cursor.execute(excute)
+        db.commit()
+        print("Table 'user' created successfully!")
+    except pymysql.Error as err:
+        print(f"Error: {err}")
+    finally:
+        cursor.close()
+        db.close()
 
 
 """
@@ -71,7 +80,6 @@ def create_user(db, user_id, username, email, password, status):
     try:
         # 创建游标对象
         cursor = db.cursor()
-
         # 插入用户数据的SQL语句
         sql_query = """
         INSERT INTO users (user_id, user_name, email, password, state)
@@ -492,8 +500,8 @@ data = cursor.fetchone()
 db.close()
 
 if __name__ == '__main__':
-    create1_users()
-    create2_users_logins()
-    create3_classes()
-    create4_users_history()
-    create5_course()
+    create_tables(db,create1)
+    create_tables(db,create2)
+    create_tables(db,create3)
+    create_tables(db,create4)
+    create_tables(db,create5)

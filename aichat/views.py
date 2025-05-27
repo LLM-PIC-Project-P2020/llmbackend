@@ -10,6 +10,10 @@ import subprocess
 import TeacherBot
 # Create your views here.
 
+db = pymysql.connect(host='localhost',
+                     user='root',
+                     password='12345678',
+                     database='sql_user')
 
 #界面需求
 def index(request):
@@ -43,7 +47,7 @@ class SessionView(View):
             password = data.get("password")
         except json.JSONDecodeError:
             return JsonResponse({"error": "Invalid JSON data"}, status=400)
-        if (search(user_id,password) == False):
+        if (search(db,user_id,password) == False):
             return JsonResponse({"error": "Invalid user or password"}, status=401)
         else:
             token = 'some_token'+user_id
