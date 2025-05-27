@@ -4,10 +4,10 @@ from rest_framework.views import APIView
 from django.views import View
 from rest_framework.response import Response
 import json
-import time
 import asyncio
 from database import *
 import subprocess
+import TeacherBot
 # Create your views here.
 
 
@@ -25,13 +25,13 @@ class TutorRespondView(View):
         # 解析请求体
         try:
             data = json.loads(request.body.decode("utf-8"))
+            code = data.get("code")
             prompt = data.get("prompt")
         except json.JSONDecodeError:
             return JsonResponse({"error": "Invalid JSON data"}, status=400)
+        stream_response = get_stream_completion(code+prompt)
         
-        stream_response = get_stream_completion(prompt)
-        
-        response = StreamingHttpResponse(stream_response, content_type="text/plain",content_length=2048)
+        response = StreamingHttpResponse(stream_response, content_type="text/plain", status=200)
         return response
 
 class SessionView(View):
@@ -137,15 +137,6 @@ class CodeComplierView(View):
                 return JsonResponse({"error": "Invalid code"}, status=400)
             return JsonResponse({'result':result}, status=200)
 
-def async_generator():
-    for i in range(10):
-        yield str(i)+"\n"
-        time.sleep(1)
-
-def stream_response(request):
-    response = StreamingHttpResponse(async_generator(), content_type="text/plain")
-    return response
-
 def code_complier(code):
     try:
         # 使用 subprocess 执行代码并捕获输出
@@ -179,3 +170,6 @@ async def get_stream_completion(prompt):
     for i in range(10):
         yield str(i)+"\n"
         await asyncio.sleep(1)
+
+
+    

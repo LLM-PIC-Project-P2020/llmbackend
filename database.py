@@ -490,3 +490,10 @@ data = cursor.fetchone()
 
 # 关闭数据库连接
 db.close()
+
+if __name__ == '__main__':
+    create1_users()
+    create2_users_logins()
+    create3_classes()
+    create4_users_history()
+    create5_course()
